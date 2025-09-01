@@ -1,2 +1,15 @@
-.zig-cache/
-zig-out/
+# Logs
+logs
+*.log
+
+node_modules
+dist
+dist-ssr
+todo.md
+*.local
+.env
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+

@@ -1,0 +1,55 @@
+body{
+  padding: 0;
+  margin: 0;
+}
+
+#log-in{
+  margin-top: 10vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.content-image{
+  border: 1px solid gray;
+  display: flex;
+  padding: 10px;
+  width: fit-content;
+  margin: 10px;
+}
+
+.content-image > .img{
+  width: 200px;
+  height: 250px;
+  background-color: gray;
+}
+
+.content-image>.text{
+  padding: 10px;
+  max-width: 600px;
+}
+
+nav{
+  display: flex;
+  padding: 10px;
+  flex-direction: column;
+  width: 120px;
+  flex-shrink: 0;
+  background: #eee
+}
+
+.nav-element{
+  padding: 10px;
+}
+
+#main{
+  display: flex;
+  height: 100vh;
+}
+
+article{
+  margin: 10px;
+  overflow: scroll;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
