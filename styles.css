@@ -3,7 +3,7 @@ body{
   margin: 0;
 }
 
-#log-in{
+#login{
   margin-top: 10vw;
   display: flex;
   justify-content: center;
@@ -18,10 +18,15 @@ body{
   margin: 10px;
 }
 
-.content-image > .img{
+#uploadImage{
+  display: flex;
+}
+
+#preview{
   width: 200px;
   height: 250px;
   background-color: gray;
+  margin-right: 10px;
 }
 
 .content-image>.text{
