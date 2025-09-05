@@ -88,11 +88,89 @@ async function getImagekitAuth(){
 
 // --- Database write ---
 
-function writeUserImageAndDesc(imageData, PLtitle, PLDesc, ENtitle, ENDesc) {
+function writeUserImageAndDesc(imageData, plTitle, plDesc, enTitle, enDesc) {
   const user = auth.currentUser;
   if (!user) return Promise.reject("Not logged in");
   const imagesRef = dbRef(db, `users/${user.uid}/images`);
-  return push(imagesRef, { image: imageData, PLtitle, PLDesc, ENtitle, ENDesc, timestamp: serverTimestamp() });
+  return push(imagesRef, { image: imageData, plTitle, plDesc, enTitle, enDesc, timestamp: serverTimestamp() });
+}
+
+function updateText(keyId){
+  const user = auth.currentUser;
+
+  const item = document.getElementById(keyId);
+  const newtitlePl = item.querySelector("#titlePl").textContent;
+  const newdescPl = item.querySelector("#descPl").textContent;
+  const newtitleEn = item.querySelector("#titleEn").textContent;
+  const newdescEn = item.querySelector("#descEn").textContent;
+
+  try{
+    const messageRef = dbRef(db, `users/${user.uid}/images/${keyId}`);
+    update(messageRef, {
+      plTitle: newtitlePl,
+      plDesc: newdescPl,
+      enTitle: newtitleEn,
+      enDesc: newdescEn
+    });
+  
+  }
+  catch{
+    console.log("Could not update content");
+  }
+  console.log("Updated content");
+
+  reLoadUserImages();
+
+}
+
+async function updateImage(keyId){
+  const user = auth.currentUser;
+
+  const item = document.getElementById(keyId);
+  const newImage = item.querySelector('#uploadImage input[type="file"]').files[0];
+  console.log(newImage);
+  
+  const uniqueName = `${newImage.name}_${Date.now()}`;
+  const authParams = await getImagekitAuth();
+
+  const res = await imagekit.upload({
+    file: newImage,
+    fileName: uniqueName,
+    folder: "/nati",
+    token: authParams.token,
+    expire: authParams.expire,
+    signature: authParams.signature
+  });
+  console.log('✅ Got URL:', res.url);
+  
+  const messageRef = dbRef(db, `users/${user.uid}/images/${keyId}`);
+  update(messageRef, {image: res.url});
+
+  console.log('✅ Uploaded sucessfull');
+
+  reLoadUserImages();
+
+}
+
+// --- Database read ---
+
+function reLoadUserImages() {
+  const user = auth.currentUser;
+  cic.innerHTML="";
+
+  const imagesRef = dbRef(db, `users/${user.uid}/images`);
+
+  onValue(imagesRef, (snapshot) => {
+    const data = snapshot.val();
+    if (!data) {
+      console.log('❌ No data found.');
+      return;
+    }
+
+    Object.entries(data).map(([key, { image, plTitle, plDesc, enTitle, enDesc}]) =>
+       createContentImageElement(key, image, plTitle, plDesc, enTitle, enDesc));
+
+  });
 }
 
 // --- General ---
@@ -103,9 +181,10 @@ function login() {
   else signOut(auth).catch(console.error);
 }
 
-function createContentImageElement() {
+function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDesc) {
   const wrapper = document.createElement("div");
   wrapper.className = "content-image";
+  wrapper.id=keyId;
 
   const imgDiv = document.createElement("div");
   imgDiv.className = "img";
@@ -118,46 +197,54 @@ function createContentImageElement() {
   input.name = "file";
   input.type = "file";
   input.accept = "image/jpeg, image/png";
+  
+  const saveImageBtn = document.createElement("button");
+  saveImageBtn.textContent = "Update Image";
+  saveImageBtn.onclick = () => updateImage(keyId);
+
+  const image = document.createElement("img");
+  image.src=cImage;
+  image.style="max-width:300px;max-height:250px"
 
   form.appendChild(input);
+  imgDiv.appendChild(image);
   imgDiv.appendChild(form);
+  imgDiv.appendChild(saveImageBtn);
 
   const textDiv = document.createElement("div");
   textDiv.className = "text";
 
   const titlePl = document.createElement("p");
+  titlePl.id = "titlePl"
   titlePl.contentEditable = "true";
-  titlePl.textContent = "TitlePl";
+  titlePl.textContent = plTitle;
 
   const descPl = document.createElement("p");
+  descPl.id = "descPl"
   descPl.contentEditable = "true";
-  descPl.textContent =
-    "Piwnica\nObraz wykonany farbami akrylowymi na papierze, przedstawiający piwnicę starego, opuszczonego domu.";
-
+  descPl.textContent = plDesc;
+  
   const hr = document.createElement("hr");
 
   const titleEn = document.createElement("p");
+  titleEn.id = "titleEn"
   titleEn.contentEditable = "true";
-  titleEn.textContent = "TitleEn";
+  titleEn.textContent = enTitle;
 
   const descEn = document.createElement("p");
+  descEn.id = "descEn"
   descEn.contentEditable = "true";
-  descEn.textContent =
-    "Piwnica\nObraz wykonany farbami akrylowymi na papierze, przedstawiający piwnicę starego, opuszczonego domu.";
+  descEn.textContent = enDesc;
 
   const saveBtn = document.createElement("button");
-  saveBtn.textContent = "Save";
+  saveBtn.textContent = "Update Text";
+  saveBtn.onclick = () => updateText(keyId);
 
   textDiv.append(titlePl, descPl, hr, titleEn, descEn, saveBtn);
 
   wrapper.append(imgDiv, textDiv);
 
-  return wrapper;
-}
-
-function addContentImage(){
-  let newContentImage = createContentImageElement();
-  cic.appendChild(newContentImage)
+  cic.appendChild(wrapper)
 }
 
 function previewImage(file) {
@@ -237,7 +324,7 @@ function submitNew(){
 // --- Event Handlers ---
 async function setupEventListeners() {
   loginButton.addEventListener('click', login);
-  addButton.addEventListener('click', addContentImage);
+  addButton.addEventListener('click', () => reLoadUserImages());
   fileInput.addEventListener('change', inputFile);
 
   form.addEventListener('submit', (e) => {

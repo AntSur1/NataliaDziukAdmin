@@ -54,6 +54,7 @@ nav{
 
 article{
   margin: 10px;
+  width: 100vw;
   overflow: scroll;
   overflow-y: auto;
   overflow-x: hidden;
