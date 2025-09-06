@@ -40,7 +40,6 @@ const loginButton = document.getElementById('login-btn');
 const tabSelected = document.getElementById('SelectedBtn');
 const tabTatoo = document.getElementById('TatooBtn');
 const tabSketches = document.getElementById('SketchesBtn');
-const tabAbout = document.getElementById('AboutBtn');
 
 const fileInput = document.querySelector('#preview input[name="file"]');
 const form = document.getElementById('uploadImage');
@@ -134,7 +133,7 @@ function updateText(keyId){
   catch{
     console.log("Could not update content");
   }
-  console.log("Updated content");
+  console.log(" Updated content");
 
   reLoadUserImages();
 
@@ -195,7 +194,7 @@ function reLoadUserImages() {
       return;
     }
 
-    Object.entries(data).map(([keyId, { image, plTitle, plDesc, enTitle, enDesc}]) =>
+    Object.entries(data).reverse().map(([keyId, { image, plTitle, plDesc, enTitle, enDesc}]) =>
        createContentImageElement(keyId, image, plTitle, plDesc, enTitle, enDesc));
 
   });
@@ -234,7 +233,7 @@ function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDe
   input.accept = "image/jpeg, image/png";
   
   const saveImageBtn = document.createElement("button");
-  saveImageBtn.textContent = "Update Image";
+  saveImageBtn.textContent = "💾 Update Image";
   saveImageBtn.onclick = () => updateImage(keyId);
 
   const image = document.createElement("img");
@@ -272,11 +271,11 @@ function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDe
   descEn.textContent = enDesc;
 
   const saveBtn = document.createElement("button");
-  saveBtn.textContent = "Update Text";
+  saveBtn.textContent = "💾 Update Text";
   saveBtn.onclick = () => updateText(keyId);
 
   const deleteBtn = document.createElement("button");
-  deleteBtn.textContent = "Delete 🗑️";
+  deleteBtn.textContent = "🗑️ Delete";
   deleteBtn.style="margin:20px";
   deleteBtn.onclick = () => deleteContentImage(keyId);
 
@@ -355,12 +354,12 @@ async function submitFile() {
 
 function submitNew(){
   submitButton.disabled = true;
-  submitButton.textContent = 'Uploading...';
+  submitButton.textContent = '⏳ Uploading...';
 
   submitFile().then(() => { 
     clearInputs();
     submitButton.disabled = false;
-    submitButton.textContent = 'Upload';
+    submitButton.textContent = '💾 Upload';
 
     reLoadUserImages();
 
@@ -384,7 +383,6 @@ async function setupEventListeners() {
   tabSelected.addEventListener('click', () => updateTab("Selected"));
   tabTatoo.addEventListener('click', () => updateTab("Tatoo"));
   tabSketches.addEventListener('click', () => updateTab("Sketches"));
-  tabAbout.addEventListener('click', () => updateTab("About"));
 
 
   form.addEventListener('submit', (e) => {
