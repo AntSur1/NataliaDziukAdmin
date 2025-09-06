@@ -37,6 +37,11 @@ const addButton = document.getElementById('content-image-add');
 const profilePic = document.getElementById('profile');
 const preview = document.getElementById('preview');
 const loginButton = document.getElementById('login-btn');
+const tabSelected = document.getElementById('SelectedBtn');
+const tabTatoo = document.getElementById('TatooBtn');
+const tabSketches = document.getElementById('SketchesBtn');
+const tabAbout = document.getElementById('AboutBtn');
+
 const fileInput = document.querySelector('#preview input[name="file"]');
 const form = document.getElementById('uploadImage');
 const submitButton = form.querySelector('button[type="submit"]');
@@ -44,7 +49,18 @@ const PltitleInput = document.getElementById('PLtitleInput');
 const PldescInput = document.getElementById('PLdescriptionInput');
 const EntitleInput = document.getElementById('ENtitleInput');
 const EndescInput = document.getElementById('ENdescriptionInput');
+const selectedTabH = document.getElementById('selected-tab');
 
+// --- State ---
+let currentListenerRef = null;
+let selectedTab = "Selected";
+
+function detachPreviousListener() {
+  if (currentListenerRef) {
+    off(currentListenerRef);
+    currentListenerRef = null;
+  }
+}
 
 // --- Auth Management ---
 async function setupAuthPersistence() {
@@ -91,7 +107,7 @@ async function getImagekitAuth(){
 function writeUserImageAndDesc(imageData, plTitle, plDesc, enTitle, enDesc) {
   const user = auth.currentUser;
   if (!user) return Promise.reject("Not logged in");
-  const imagesRef = dbRef(db, `users/${user.uid}/images`);
+  const imagesRef = dbRef(db, `users/${user.uid}/${selectedTab}`);
   return push(imagesRef, { image: imageData, plTitle, plDesc, enTitle, enDesc, timestamp: serverTimestamp() });
 }
 
@@ -105,7 +121,8 @@ function updateText(keyId){
   const newdescEn = item.querySelector("#descEn").textContent;
 
   try{
-    const messageRef = dbRef(db, `users/${user.uid}/images/${keyId}`);
+    const messageRef = dbRef(db, `users/${user.uid}/${selectedTab}/${keyId}`);
+    detachPreviousListener();
     update(messageRef, {
       plTitle: newtitlePl,
       plDesc: newdescPl,
@@ -128,7 +145,6 @@ async function updateImage(keyId){
 
   const item = document.getElementById(keyId);
   const newImage = item.querySelector('#uploadImage input[type="file"]').files[0];
-  console.log(newImage);
   
   const uniqueName = `${newImage.name}_${Date.now()}`;
   const authParams = await getImagekitAuth();
@@ -136,14 +152,17 @@ async function updateImage(keyId){
   const res = await imagekit.upload({
     file: newImage,
     fileName: uniqueName,
-    folder: "/nati",
+    folder: `/${selectedTab}`,
     token: authParams.token,
     expire: authParams.expire,
     signature: authParams.signature
   });
   console.log('✅ Got URL:', res.url);
   
-  const messageRef = dbRef(db, `users/${user.uid}/images/${keyId}`);
+  const messageRef = dbRef(db, `users/${user.uid}/${selectedTab}/${keyId}`);
+  detachPreviousListener();
+  currentListenerRef = imagesRef;
+
   update(messageRef, {image: res.url});
 
   console.log('✅ Uploaded sucessfull');
@@ -152,13 +171,22 @@ async function updateImage(keyId){
 
 }
 
+function deleteImage(keyId){
+  const user = auth.currentUser;
+  const imageRef = dbRef(db, `users/${user.uid}/${selectedTab}/${keyId}`);
+  return remove(imageRef)
+}
+
 // --- Database read ---
 
 function reLoadUserImages() {
   const user = auth.currentUser;
   cic.innerHTML="";
 
-  const imagesRef = dbRef(db, `users/${user.uid}/images`);
+  const imagesRef = dbRef(db, `users/${user.uid}/${selectedTab}`);
+
+  detachPreviousListener();
+  currentListenerRef = imagesRef;
 
   onValue(imagesRef, (snapshot) => {
     const data = snapshot.val();
@@ -167,10 +195,11 @@ function reLoadUserImages() {
       return;
     }
 
-    Object.entries(data).map(([key, { image, plTitle, plDesc, enTitle, enDesc}]) =>
-       createContentImageElement(key, image, plTitle, plDesc, enTitle, enDesc));
+    Object.entries(data).map(([keyId, { image, plTitle, plDesc, enTitle, enDesc}]) =>
+       createContentImageElement(keyId, image, plTitle, plDesc, enTitle, enDesc));
 
   });
+
 }
 
 // --- General ---
@@ -179,6 +208,12 @@ function login() {
   const user = auth.currentUser;
   if (!user) signInWithPopup(auth, provider).catch(console.error);
   else signOut(auth).catch(console.error);
+}
+
+function updateTab(newTab){
+  selectedTab = newTab;
+  selectedTabH.innerHTML = newTab;
+  reLoadUserImages();
 }
 
 function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDesc) {
@@ -240,7 +275,13 @@ function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDe
   saveBtn.textContent = "Update Text";
   saveBtn.onclick = () => updateText(keyId);
 
-  textDiv.append(titlePl, descPl, hr, titleEn, descEn, saveBtn);
+  const deleteBtn = document.createElement("button");
+  deleteBtn.textContent = "Delete 🗑️";
+  deleteBtn.style="margin:20px";
+  deleteBtn.onclick = () => deleteContentImage(keyId);
+
+
+  textDiv.append(titlePl, descPl, hr, titleEn, descEn, saveBtn, deleteBtn);
 
   wrapper.append(imgDiv, textDiv);
 
@@ -258,7 +299,7 @@ function previewImage(file) {
     const img = document.getElementById('previewImg');
     img.src = e.target.result;
     img.style.maxWidth = "200px";
-    img.style.maxHeight = "250px";
+    img.style.maxHeight = "230px";
     preview.appendChild(img);
     fileInput.dataset.base64 = e.target.result;
   };
@@ -272,6 +313,8 @@ function inputFile() {
 } 
 
 function clearInputs() {
+  const img = document.getElementById('previewImg');
+  img.src = "";
   fileInput.value = "";
   PltitleInput.value = "";
   PldescInput.value = "";
@@ -295,13 +338,14 @@ async function submitFile() {
     const res = await imagekit.upload({
       file: file,
       fileName: uniqueName,
-      folder: "/nati",
+      folder: `/${selectedTab}`,
       token: authParams.token,
       expire: authParams.expire,
       signature: authParams.signature
     });
     console.log('✅ Got URL:', res.url);
     writeUserImageAndDesc(res.url, Pltitle, Pldesc, Entitle, Endesc );
+
     console.log('✅ Uploaded sucessfull');
 
   } catch (err) {
@@ -317,19 +361,36 @@ function submitNew(){
     clearInputs();
     submitButton.disabled = false;
     submitButton.textContent = 'Upload';
+
+    reLoadUserImages();
+
   });
+
 }
 
+function deleteContentImage(keyId){
+  if (confirm("Confirm delete?")) deleteImage(keyId).then(() => {
+    document.getElementById(keyId).remove();
+    reLoadUserImages();
+  });
+}
 
 // --- Event Handlers ---
 async function setupEventListeners() {
   loginButton.addEventListener('click', login);
-  addButton.addEventListener('click', () => reLoadUserImages());
+  addButton.addEventListener('click', reLoadUserImages);
   fileInput.addEventListener('change', inputFile);
+
+  tabSelected.addEventListener('click', () => updateTab("Selected"));
+  tabTatoo.addEventListener('click', () => updateTab("Tatoo"));
+  tabSketches.addEventListener('click', () => updateTab("Sketches"));
+  tabAbout.addEventListener('click', () => updateTab("About"));
+
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     submitNew();
+    
   });
 }
 
