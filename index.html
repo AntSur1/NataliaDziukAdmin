@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Natalia Dziuk Admin Page</title>
+  <link rel="icon" type="image/x-ico" href="/assets/ico-DYc-MDDD.ico">
+
+  <script type="module" crossorigin src="/assets/index-DMYzV3ZI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CndQ2au4.css">
+</head>
+<body>
+
+<div id="login" style="display: none;">
+</div>
+
+
+<div id="main">
+<nav>
+
+  <a href="https://nataliadziuk.pl">
+    <h3>Natalia Dziuk</h3>
+    <img src="/assets/logo-B0HlGPLB.png" alt="" class="nav-img">
+  </a>
+
+  <img id="profile" src=""/>
+  <button id="login-btn">Log in</button>
+
+
+  <button class="nav-element" id="SelectedBtn">Selected</button>
+  <button class="nav-element" id="TatooBtn">Tatoo</button>
+  <button class="nav-element" id="SketchesBtn">Sketches</button>
+</nav>
+
+<article>
+  <h1 id="selected-tab">Selected</h1>
+<div id="content-image-container"></div>
+
+<div id="content-image-container">
+  <div class="content-image">
+    <div class="img">
+      <form id="uploadImage" method="post" enctype="multipart/form-data">
+        <div id="preview">
+          <input name="file" type="file" accept="image/jpeg, image/png" />
+          <img id="previewImg" src=""> </img>
+        </div>
+        <div id="content-descs">
+            
+          <input type="text" id="PLtitleInput" placeholder="PL Title"/><br>
+          <textarea type="message" id="PLdescriptionInput" placeholder="PL Description"></textarea>
+          <hr>
+          <input type="text" id="ENtitleInput" placeholder="EN Title"/><br>
+          <textarea type="message" id="ENdescriptionInput" placeholder="EN Description"></textarea>
+          <br>
+          <button type="submit">💾 Upload</button>
+        </div>
+        
+
+      </form>
+    </div>
+
+  </div>
+
+  <button id="content-image-add">Load</button>
+
+  <div id="new-content"></div>
+</div>
+
+
+</article>
+
+
+</div>
+
+
+</body>
+</html>
