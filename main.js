@@ -52,7 +52,7 @@ const selectedTabH = document.getElementById('selected-tab');
 
 // --- State ---
 let currentListenerRef = null;
-let selectedTab = "Selected";
+let selectedTab = "selected";
 
 function detachPreviousListener() {
   if (currentListenerRef) {
@@ -106,7 +106,7 @@ async function getImagekitAuth(){
 function writeUserImageAndDesc(imageData, plTitle, plDesc, enTitle, enDesc) {
   const user = auth.currentUser;
   if (!user) return Promise.reject("Not logged in");
-  const imagesRef = dbRef(db, `users/${user.uid}/${selectedTab}`);
+  const imagesRef = dbRef(db, `webPage/${selectedTab}`);
   return push(imagesRef, { image: imageData, plTitle, plDesc, enTitle, enDesc, timestamp: serverTimestamp() });
 }
 
@@ -120,7 +120,7 @@ function updateText(keyId){
   const newdescEn = item.querySelector("#descEn").textContent;
 
   try{
-    const messageRef = dbRef(db, `users/${user.uid}/${selectedTab}/${keyId}`);
+    const messageRef = dbRef(db, `webPage/${selectedTab}/${keyId}`);
     detachPreviousListener();
     update(messageRef, {
       plTitle: newtitlePl,
@@ -158,9 +158,9 @@ async function updateImage(keyId){
   });
   console.log('✅ Got URL:', res.url);
   
-  const messageRef = dbRef(db, `users/${user.uid}/${selectedTab}/${keyId}`);
+  const messageRef = dbRef(db, `webPage/${selectedTab}/${keyId}`);
   detachPreviousListener();
-  currentListenerRef = imagesRef;
+  currentListenerRef = messageRef;
 
   update(messageRef, {image: res.url});
 
@@ -172,7 +172,7 @@ async function updateImage(keyId){
 
 function deleteImage(keyId){
   const user = auth.currentUser;
-  const imageRef = dbRef(db, `users/${user.uid}/${selectedTab}/${keyId}`);
+  const imageRef = dbRef(db, `webPage/${selectedTab}/${keyId}`);
   return remove(imageRef)
 }
 
@@ -182,7 +182,7 @@ function reLoadUserImages() {
   const user = auth.currentUser;
   cic.innerHTML="";
 
-  const imagesRef = dbRef(db, `users/${user.uid}/${selectedTab}`);
+  const imagesRef = dbRef(db, `webPage/${selectedTab}`);
 
   detachPreviousListener();
   currentListenerRef = imagesRef;
@@ -380,9 +380,9 @@ async function setupEventListeners() {
   addButton.addEventListener('click', reLoadUserImages);
   fileInput.addEventListener('change', inputFile);
 
-  tabSelected.addEventListener('click', () => updateTab("Selected"));
-  tabTatoo.addEventListener('click', () => updateTab("Tatoo"));
-  tabSketches.addEventListener('click', () => updateTab("Sketches"));
+  tabSelected.addEventListener('click', () => updateTab("selected"));
+  tabTatoo.addEventListener('click', () => updateTab("tattoo"));
+  tabSketches.addEventListener('click', () => updateTab("sketches"));
 
 
   form.addEventListener('submit', (e) => {
