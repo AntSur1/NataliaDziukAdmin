@@ -40,6 +40,7 @@ const loginButton = document.getElementById('login-btn');
 const tabSelected = document.getElementById('SelectedBtn');
 const tabTatoo = document.getElementById('TatooBtn');
 const tabSketches = document.getElementById('SketchesBtn');
+const tabCredentials = document.getElementById('CredentialsBtn');
 
 const fileInput = document.querySelector('#preview input[name="file"]');
 const form = document.getElementById('uploadImage');
@@ -383,6 +384,7 @@ async function setupEventListeners() {
   tabSelected.addEventListener('click', () => updateTab("selected"));
   tabTatoo.addEventListener('click', () => updateTab("tattoo"));
   tabSketches.addEventListener('click', () => updateTab("sketches"));
+  tabCredentials.addEventListener('click', () => updateTab("credentials"));
 
 
   form.addEventListener('submit', (e) => {
