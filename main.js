@@ -272,7 +272,7 @@ function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDe
   textDiv.className = "text";
 
   const titlePlDesc = document.createElement("span");
-  titlePlDesc.textContent = "plTitle:";
+  titlePlDesc.textContent = "plTitle:  ";
 
   const titlePl = document.createElement("p");
   titlePl.id = "titlePl"
@@ -280,7 +280,7 @@ function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDe
   titlePl.textContent = plTitle;
 
   const descPlDesc = document.createElement("span");
-  descPlDesc.textContent = "plDesc:";
+  descPlDesc.textContent = "plDesc:  ";
 
   const descPl = document.createElement("p");
   descPl.id = "descPl"
@@ -290,7 +290,7 @@ function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDe
   const hr = document.createElement("hr");
 
   const titleEnDesc = document.createElement("span");
-  titleEnDesc.textContent = "enTitle:";
+  titleEnDesc.textContent = "enTitle:  ";
 
   const titleEn = document.createElement("p");
   titleEn.id = "titleEn"
@@ -298,7 +298,7 @@ function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDe
   titleEn.textContent = enTitle;
 
   const descEnDesc = document.createElement("span");
-  descEnDesc.textContent = "enDesc:";
+  descEnDesc.textContent = "enDesc:  ";
 
   const descEn = document.createElement("p");
   descEn.id = "descEn"
@@ -306,7 +306,7 @@ function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDe
   descEn.textContent = enDesc;
 
   const orderNrDesc = document.createElement("span");
-  orderNrDesc.textContent = "nrOrder:";
+  orderNrDesc.textContent = "nrOrder:  ";
 
   const orderNr = document.createElement("p");
   orderNr.id = "orderNr"
@@ -323,19 +323,14 @@ function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDe
   deleteBtn.onclick = () => deleteContentImage(keyId);
 
   textDiv.append(
-    titlePlDesc,
-    titlePl,
-    descPlDesc,
-    descPl,
-    hr,
-    titleEnDesc,
-    titleEn,
-    descEnDesc,
-    descEn,
-    orderNrDesc,
-    orderNr,
-    saveBtn,
-    deleteBtn);
+    titlePlDesc, titlePl, document.createElement("br"),
+    descPlDesc, descPl, document.createElement("br"),
+    hr,document.createElement("br"),
+    titleEnDesc, titleEn, document.createElement("br"),
+    descEnDesc,descEn, document.createElement("br"),
+    orderNrDesc, orderNr, document.createElement("br"),
+    saveBtn, deleteBtn
+  );
 
   wrapper.append(imgDiv, textDiv);
 

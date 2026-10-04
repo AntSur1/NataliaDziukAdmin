@@ -69,5 +69,9 @@ article{
 }
 
 .text p {
-  border: 1px solid #000000;
+    display: inline-block;
+    vertical-align: top;
+    border: 1px solid #000000;
+    min-width: 150px;
+    margin: 0 0 15px 0;
 }
