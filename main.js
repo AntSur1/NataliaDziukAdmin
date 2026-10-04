@@ -1,7 +1,7 @@
 // --- Firebase Initialization ---
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, setPersistence, browserSessionPersistence} from "firebase/auth";
-import { getDatabase, ref as dbRef, push, get, serverTimestamp, onValue, off, remove, update} from "firebase/database";
+import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, setPersistence, browserSessionPersistence } from "firebase/auth";
+import { getDatabase, ref as dbRef, push, get, serverTimestamp, onValue, off, remove, update } from "firebase/database";
 import ImageKit from "imagekit-javascript";
 
 
@@ -86,7 +86,7 @@ function onUserStateChanged(user) {
   }
 }
 
-async function getImagekitAuth(){
+async function getImagekitAuth() {
   let user = auth.currentUser;
   const token = await user.getIdToken();
   const res = await fetch("https://natbackend.vercel.app/api/getSignature", {
@@ -113,52 +113,54 @@ async function getNextOrderNrInTab(selectedTab) {
 
 async function writeUserImageAndDesc(imageData, plTitle, plDesc, enTitle, enDesc) {
   const user = auth.currentUser;
-  if (!user) return Promise.reject("Not logged in");
+  if (!user) return Promise.reject("❌ Not logged in");
 
   const orderNr = await getNextOrderNrInTab(selectedTab);
   const imagesRef = dbRef(db, `webPage/${selectedTab}`);
 
   return push(
-    imagesRef, 
-    {image: imageData, plTitle, plDesc, enTitle, enDesc, orderNr, timestamp: serverTimestamp()}
+    imagesRef,
+    { image: imageData, plTitle, plDesc, enTitle, enDesc, orderNr, timestamp: serverTimestamp() }
   );
 }
 
-function updateText(keyId){
+function updateText(keyId) {
   const user = auth.currentUser;
 
   const item = document.getElementById(keyId);
-  const newtitlePl = item.querySelector("#titlePl").textContent;
-  const newdescPl = item.querySelector("#descPl").textContent;
-  const newtitleEn = item.querySelector("#titleEn").textContent;
-  const newdescEn = item.querySelector("#descEn").textContent;
+  const newTitlePl = item.querySelector("#titlePl").textContent;
+  const newDescPl = item.querySelector("#descPl").textContent;
+  const newTitleEn = item.querySelector("#titleEn").textContent;
+  const newDescEn = item.querySelector("#descEn").textContent;
+  const newOrderNr = item.querySelector("#orderNr").textContent;
 
-  try{
+  try {
     const messageRef = dbRef(db, `webPage/${selectedTab}/${keyId}`);
     detachPreviousListener();
     update(messageRef, {
-      plTitle: newtitlePl,
-      plDesc: newdescPl,
-      enTitle: newtitleEn,
-      enDesc: newdescEn
+      plTitle: newTitlePl,
+      plDesc: newDescPl,
+      enTitle: newTitleEn,
+      enDesc: newDescEn,
+      orderNr: parseInt(newOrderNr)
     });
-  
+
   }
-  catch{
-    console.log("Could not update content");
+  catch {
+    console.log("❌ Could not send update content request");
   }
-  console.log(" Updated content");
+  console.log("✅ Sent update content request");
 
   reLoadUserImages();
 
 }
 
-async function updateImage(keyId){
+async function updateImage(keyId) {
   const user = auth.currentUser;
 
   const item = document.getElementById(keyId);
   const newImage = item.querySelector('#uploadImage input[type="file"]').files[0];
-  
+
   const uniqueName = `${newImage.name}_${Date.now()}`;
   const authParams = await getImagekitAuth();
 
@@ -171,12 +173,12 @@ async function updateImage(keyId){
     signature: authParams.signature
   });
   console.log('✅ Got URL:', res.url);
-  
+
   const messageRef = dbRef(db, `webPage/${selectedTab}/${keyId}`);
   detachPreviousListener();
   currentListenerRef = messageRef;
 
-  update(messageRef, {image: res.url});
+  update(messageRef, { image: res.url });
 
   console.log('✅ Uploaded sucessfull');
 
@@ -184,7 +186,7 @@ async function updateImage(keyId){
 
 }
 
-function deleteImage(keyId){
+function deleteImage(keyId) {
   const user = auth.currentUser;
   const imageRef = dbRef(db, `webPage/${selectedTab}/${keyId}`);
   return remove(imageRef)
@@ -193,14 +195,14 @@ function deleteImage(keyId){
 // --- Database read ---
 
 function sortByOrder([, a], [, b]) {
-    if (a.orderNr == null) return 1;
-    if (b.orderNr == null) return -1;
-    return b.orderNr - a.orderNr;
+  if (a.orderNr == null) return 1;
+  if (b.orderNr == null) return -1;
+  return b.orderNr - a.orderNr;
 }
 
 function reLoadUserImages() {
   const user = auth.currentUser;
-  cic.innerHTML="";
+  cic.innerHTML = "";
 
   const imagesRef = dbRef(db, `webPage/${selectedTab}`);
 
@@ -215,9 +217,9 @@ function reLoadUserImages() {
     }
 
     Object.entries(data)
-    .sort(sortByOrder)
-    .map(([keyId, { image, plTitle, plDesc, enTitle, enDesc }]) =>
-       createContentImageElement(keyId, image, plTitle, plDesc, enTitle, enDesc));
+      .sort(sortByOrder)
+      .map(([keyId, { image, plTitle, plDesc, enTitle, enDesc, orderNr }]) =>
+        createContentImageElement(keyId, image, plTitle, plDesc, enTitle, enDesc, orderNr));
   });
 
 }
@@ -230,16 +232,16 @@ function login() {
   else signOut(auth).catch(console.error);
 }
 
-function updateTab(newTab){
+function updateTab(newTab) {
   selectedTab = newTab;
   selectedTabH.innerHTML = newTab;
   reLoadUserImages();
 }
 
-function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDesc) {
+function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDesc, nrOrder) {
   const wrapper = document.createElement("div");
   wrapper.className = "content-image";
-  wrapper.id=keyId;
+  wrapper.id = keyId;
 
   const imgDiv = document.createElement("div");
   imgDiv.className = "img";
@@ -252,14 +254,14 @@ function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDe
   input.name = "file";
   input.type = "file";
   input.accept = "image/jpeg, image/png";
-  
+
   const saveImageBtn = document.createElement("button");
   saveImageBtn.textContent = "💾 Update Image";
   saveImageBtn.onclick = () => updateImage(keyId);
 
   const image = document.createElement("img");
-  image.src=cImage;
-  image.style="max-width:300px;max-height:250px"
+  image.src = cImage;
+  image.style = "max-width:300px;max-height:250px"
 
   form.appendChild(input);
   imgDiv.appendChild(image);
@@ -269,27 +271,47 @@ function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDe
   const textDiv = document.createElement("div");
   textDiv.className = "text";
 
+  const titlePlDesc = document.createElement("span");
+  titlePlDesc.textContent = "plTitle:";
+
   const titlePl = document.createElement("p");
   titlePl.id = "titlePl"
   titlePl.contentEditable = "true";
   titlePl.textContent = plTitle;
 
+  const descPlDesc = document.createElement("span");
+  descPlDesc.textContent = "plDesc:";
+
   const descPl = document.createElement("p");
   descPl.id = "descPl"
   descPl.contentEditable = "true";
   descPl.textContent = plDesc;
-  
+
   const hr = document.createElement("hr");
+
+  const titleEnDesc = document.createElement("span");
+  titleEnDesc.textContent = "enTitle:";
 
   const titleEn = document.createElement("p");
   titleEn.id = "titleEn"
   titleEn.contentEditable = "true";
   titleEn.textContent = enTitle;
 
+  const descEnDesc = document.createElement("span");
+  descEnDesc.textContent = "enDesc:";
+
   const descEn = document.createElement("p");
   descEn.id = "descEn"
   descEn.contentEditable = "true";
   descEn.textContent = enDesc;
+
+  const orderNrDesc = document.createElement("span");
+  orderNrDesc.textContent = "nrOrder:";
+
+  const orderNr = document.createElement("p");
+  orderNr.id = "orderNr"
+  orderNr.contentEditable = "true";
+  orderNr.textContent = nrOrder;
 
   const saveBtn = document.createElement("button");
   saveBtn.textContent = "💾 Update Text";
@@ -297,11 +319,23 @@ function createContentImageElement(keyId, cImage, plTitle, plDesc, enTitle, enDe
 
   const deleteBtn = document.createElement("button");
   deleteBtn.textContent = "🗑️ Delete";
-  deleteBtn.style="margin:20px";
+  deleteBtn.style = "margin:20px";
   deleteBtn.onclick = () => deleteContentImage(keyId);
 
-
-  textDiv.append(titlePl, descPl, hr, titleEn, descEn, saveBtn, deleteBtn);
+  textDiv.append(
+    titlePlDesc,
+    titlePl,
+    descPlDesc,
+    descPl,
+    hr,
+    titleEnDesc,
+    titleEn,
+    descEnDesc,
+    descEn,
+    orderNrDesc,
+    orderNr,
+    saveBtn,
+    deleteBtn);
 
   wrapper.append(imgDiv, textDiv);
 
@@ -323,14 +357,14 @@ function previewImage(file) {
     preview.appendChild(img);
     fileInput.dataset.base64 = e.target.result;
   };
-  
+
   reader.readAsDataURL(file);
 }
 
 function inputFile() {
   const file = fileInput.files[0];
   if (file) previewImage(file);
-} 
+}
 
 function clearInputs() {
   const img = document.getElementById('previewImg');
@@ -350,7 +384,7 @@ async function submitFile() {
   const Endesc = EndescInput.value.trim();
 
   if (!file) return alert("Please select a file");
-  
+
   try {
     const uniqueName = `${file.name}_${Date.now()}`;
     const authParams = await getImagekitAuth();
@@ -364,7 +398,7 @@ async function submitFile() {
       signature: authParams.signature
     });
     console.log('✅ Got URL:', res.url);
-    writeUserImageAndDesc(res.url, Pltitle, Pldesc, Entitle, Endesc );
+    writeUserImageAndDesc(res.url, Pltitle, Pldesc, Entitle, Endesc);
 
     console.log('✅ Uploaded sucessfull');
 
@@ -373,11 +407,11 @@ async function submitFile() {
   }
 }
 
-function submitNew(){
+function submitNew() {
   submitButton.disabled = true;
   submitButton.textContent = '⏳ Uploading...';
 
-  submitFile().then(() => { 
+  submitFile().then(() => {
     clearInputs();
     submitButton.disabled = false;
     submitButton.textContent = '💾 Upload';
@@ -388,7 +422,7 @@ function submitNew(){
 
 }
 
-function deleteContentImage(keyId){
+function deleteContentImage(keyId) {
   if (confirm("Confirm delete?")) deleteImage(keyId).then(() => {
     document.getElementById(keyId).remove();
     reLoadUserImages();
@@ -410,7 +444,7 @@ async function setupEventListeners() {
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     submitNew();
-    
+
   });
 }
 
