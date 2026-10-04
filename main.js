@@ -1,7 +1,7 @@
 // --- Firebase Initialization ---
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, setPersistence, browserSessionPersistence} from "firebase/auth";
-import { getDatabase, ref as dbRef, push, serverTimestamp, onValue, off, remove, update} from "firebase/database";
+import { getDatabase, ref as dbRef, push, get, serverTimestamp, onValue, off, remove, update} from "firebase/database";
 import ImageKit from "imagekit-javascript";
 
 
@@ -55,6 +55,7 @@ const selectedTabH = document.getElementById('selected-tab');
 let currentListenerRef = null;
 let selectedTab = "selected";
 
+
 function detachPreviousListener() {
   if (currentListenerRef) {
     off(currentListenerRef);
@@ -98,17 +99,29 @@ async function getImagekitAuth(){
     throw new Error(data.error || "Failed to get ImageKit auth");
   }
   return data.data;
-
 }
 
 
 // --- Database write ---
+async function getNextOrderNrInTab(selectedTab) {
+  const imagesRef = dbRef(db, `webPage/${selectedTab}`);
+  const snapshot = await get(imagesRef);
+  const data = snapshot.val() || {};
 
-function writeUserImageAndDesc(imageData, plTitle, plDesc, enTitle, enDesc) {
+  return Math.max(0, ...Object.values(data).map(item => item.orderNr ?? 0)) + 100;
+}
+
+async function writeUserImageAndDesc(imageData, plTitle, plDesc, enTitle, enDesc) {
   const user = auth.currentUser;
   if (!user) return Promise.reject("Not logged in");
+
+  const orderNr = await getNextOrderNrInTab(selectedTab);
   const imagesRef = dbRef(db, `webPage/${selectedTab}`);
-  return push(imagesRef, { image: imageData, plTitle, plDesc, enTitle, enDesc, timestamp: serverTimestamp() });
+
+  return push(
+    imagesRef, 
+    {image: imageData, plTitle, plDesc, enTitle, enDesc, orderNr, timestamp: serverTimestamp()}
+  );
 }
 
 function updateText(keyId){
@@ -179,6 +192,12 @@ function deleteImage(keyId){
 
 // --- Database read ---
 
+function sortByOrder([, a], [, b]) {
+    if (a.orderNr == null) return 1;
+    if (b.orderNr == null) return -1;
+    return b.orderNr - a.orderNr;
+}
+
 function reLoadUserImages() {
   const user = auth.currentUser;
   cic.innerHTML="";
@@ -195,9 +214,10 @@ function reLoadUserImages() {
       return;
     }
 
-    Object.entries(data).reverse().map(([keyId, { image, plTitle, plDesc, enTitle, enDesc}]) =>
+    Object.entries(data)
+    .sort(sortByOrder)
+    .map(([keyId, { image, plTitle, plDesc, enTitle, enDesc }]) =>
        createContentImageElement(keyId, image, plTitle, plDesc, enTitle, enDesc));
-
   });
 
 }
